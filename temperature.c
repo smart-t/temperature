@@ -72,7 +72,7 @@ int reg_read( 	  i2c_inst_t *i2c,
 
 void init_BMP280( i2c_inst_t *i2c );
 
-double get_temperature( int adc_t );
+double get_temperature( uint8_t *data );
 
 /* GLOBAL VAR TO HOLD THE COEFICIENTS ******************************************/
 uint8_t coeficients[24];
@@ -85,7 +85,7 @@ int main(void){
     // Ports
     i2c_inst_t *i2c = i2c0;
 
-    // Allow this programto print to serial
+    // Allow this program to print to serial
     stdio_init_all();
 
     // Initialize onboard LED
@@ -106,7 +106,6 @@ int main(void){
     uint8_t data[3];
 
     // Vars to hold the temperature
-    int adc_T = 0;
     double temperature = 0.0;
 
     // Initialize BMP280 Module
@@ -117,14 +116,8 @@ int main(void){
         // Get temperature from module
         n = reg_read( i2c, BMP280_ADDR, REG_TEMP, data, 3);
 
-        adc_T = data[0];
-        adc_T <<= 8;
-        adc_T |= data[1];
-        adc_T <<= 4;
-        adc_T |= (data[3] >> 4);
-
         // Get temperature from raw value and stored coeficients
-        temperature = get_temperature( adc_T);
+        temperature = get_temperature( data);
 
         printf("[-] %3.1f°C\n", temperature);
 
@@ -145,13 +138,24 @@ int main(void){
 /* FUNCTION DEFINITIONS ********************************************************/
 
 // Calculate temperature from raw value and coeficients
-double get_temperature( int adc_t) {
+double get_temperature( uint8_t *data) {
     double t = 0.0;
     double var1 = 0;
     double var2 = 0;
+    int adc_t = 0;
 
-    var1 = (adc_t/16384.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/1024.0) * ((int16_t)((coeficients[3] << 8) | coeficients[2]));
-    var2 = (adc_t/131072.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/8192.0) * (adc_t/131072.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/8192.0) * ((int16_t)((coeficients[5] << 8) | coeficients[4]));
+    adc_t = data[0];
+    adc_t <<= 8;
+    adc_t |= data[1];
+    adc_t <<= 4;
+    adc_t |= (data[3] >> 4);
+
+    var1 = (adc_t/16384.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/1024.0) *
+           ((int16_t)((coeficients[3] << 8) | coeficients[2]));
+
+    var2 = (adc_t/131072.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/8192.0) *
+           (adc_t/131072.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/8192.0) *
+           ((int16_t)((coeficients[5] << 8) | coeficients[4]));
 
     t = (var1 + var2) / 5120.0;
 
