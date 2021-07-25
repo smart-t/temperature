@@ -14,13 +14,13 @@
 /* Connect 3V3-OUT (physical pin 36) to Vin of BMP280 board                    */
 /* Connect GND (physical pin 38) to Gnd of BMP280 board                        */
 
-#define I2C0_SDA_PORT 4			/* Serial data at physical pin 6               */
-			 					/* -- connect to SD1 of BMP280 board           */
+#define I2C0_SDA_PORT 4         /* Serial data at physical pin 6               */
+                                /* -- connect to SD1 of BMP280 board           */
 
-#define I2C0_SCL_PORT 5			/* Clock at physical pin 7                     */
-								/* -- connect to SCK of BMP280 board           */
+#define I2C0_SCL_PORT 5         /* Clock at physical pin 7                     */
+                                /* -- connect to SCK of BMP280 board           */
 
-#define LED_PIN 25				/* Onboard LED at physical pin 25              */
+#define LED_PIN 25              /* Onboard LED at physical pin 25              */
 /*******************************************************************************/
 
 /* ADDRESS OF BMP280 ***********************************************************/
@@ -50,27 +50,27 @@ static const uint8_t IIR_FILTER_X8 = 0x03;
 static const uint8_t IIR_FILTER_X16 = 0x04;
 
 /* BMP280 REGISTERS ************************************************************/
-static const uint8_t REG_DIG_T1    = 0x88; 	/* ID register address         	   */
-static const uint8_t REG_ID        = 0xD0; 	/* ID register address             */
-static const uint8_t REG_TEMP      = 0xFA; 	/* Temerature register address     */
-static const uint8_t REG_PRESSURE  = 0xF7; 	/* Pressure register address       */
-static const uint8_t REG_RESET     = 0xE0; 	/* Soft reset address              */
-static const uint8_t REG_STATUS    = 0xF3; 	/* Status register address         */
-static const uint8_t REG_CTRL_MEAS = 0xF4; 	/* Data aquisition ctrl address    */
-static const uint8_t REG_CONFIG    = 0xF5; 	/* Config register address         */
+static const uint8_t REG_DIG_T1    = 0x88;  /* ID register address             */
+static const uint8_t REG_ID        = 0xD0;  /* ID register address             */
+static const uint8_t REG_TEMP      = 0xFA;  /* Temerature register address     */
+static const uint8_t REG_PRESSURE  = 0xF7;  /* Pressure register address       */
+static const uint8_t REG_RESET     = 0xE0;  /* Soft reset address              */
+static const uint8_t REG_STATUS    = 0xF3;  /* Status register address         */
+static const uint8_t REG_CTRL_MEAS = 0xF4;  /* Data aquisition ctrl address    */
+static const uint8_t REG_CONFIG    = 0xF5;  /* Config register address         */
 
 /* FUNCTION HEADERS ************************************************************/
-void reg_write(	  i2c_inst_t *i2c,
-		  const uint addr,
-		  const uint8_t reg,
-		  uint8_t *buf,
-		  const uint8_t nbytes );
+void reg_write(      i2c_inst_t *i2c,
+          const uint addr,
+          const uint8_t reg,
+          uint8_t *buf,
+          const uint8_t nbytes );
 
-int reg_read( 	  i2c_inst_t *i2c,
-		  const uint addr,
-		  const uint8_t reg,
-		  uint8_t *buf,
-		  const uint8_t nbytes );
+int reg_read(       i2c_inst_t *i2c,
+          const uint addr,
+          const uint8_t reg,
+          uint8_t *buf,
+          const uint8_t nbytes );
 
 void init_BMP280( i2c_inst_t *i2c );
 
@@ -82,7 +82,7 @@ double get_height( double pressure, double p_atsealevel);
 
 /* GLOBAL VARS *****************************************************************/
 uint8_t coeficients[24]; /* coeficients required for temperature and pressure  */
-double t_fine; /* needed to pass the var1 + var2 temperature to pressure calc.   */
+double t_fine; /* needed to pass the var1 + var2 temperature to pressure calc. */
 
 int main(void){
 
@@ -115,8 +115,8 @@ int main(void){
     // Vars to hold the temperature and pressure
     double temperature = 0.0;
     double pressure = 0.0;
-	double pressure_at_sealevel_for_location = 100800.0; // Eindhoven 2021.07.25 1008 milibar = 100800 Pa
-	double height = 0.0;
+    double pressure_at_sealevel_for_location = 100800.0; // Eindhoven 2021.07.25 1008 milibar = 100800 Pa
+    double height = 0.0;
     char abovebelow[5];
 
     // Initialize BMP280 Module
@@ -136,16 +136,16 @@ int main(void){
         // Get temperature from raw value and stored coeficients
         pressure = get_pressure( data);
 
-		// Get height at location
-		height = get_height( pressure, pressure_at_sealevel_for_location);
+        // Get height at location
+        height = get_height( pressure, pressure_at_sealevel_for_location);
 
-		// Find out if we are above or below sealevel
-		if( height < 0){
-			sprintf(abovebelow, "below");
-			height *= -1;
-		} else {
-			sprintf(abovebelow, "above");
-		}
+        // Find out if we are above or below sealevel
+        if( height < 0){
+            sprintf(abovebelow, "below");
+            height *= -1;
+        } else {
+            sprintf(abovebelow, "above");
+        }
 
         printf("[-] %3.2f°C, %6.2fPa, %3.2fm %s sealevel.\n", temperature, pressure, height, abovebelow);
 
@@ -157,7 +157,7 @@ int main(void){
         // LED-OFF
         gpio_put(LED_PIN, 0);
 
-	sleep_ms(1000);
+    sleep_ms(1000);
     }
 
     return 0;
@@ -167,15 +167,15 @@ int main(void){
 
 // Calcultate height given the p_measured and p_atsealevel for the location
 double get_height( double pressure, double p_atsealevel){
-	double p = 0.0;
-	double ps = 0.0;
-	double h = 0.0;
+    double p = 0.0;
+    double ps = 0.0;
+    double h = 0.0;
 
-	p = pressure;
-	ps = p_atsealevel;
-	h = 44330 * (1.0 - pow( p/ps, 0.1903));
+    p = pressure;
+    ps = p_atsealevel;
+    h = 44330 * (1.0 - pow( p/ps, 0.1903));
 
-	return h;
+    return h;
 }
 
 // Calculate pressure from raw value and coeficients
@@ -192,20 +192,20 @@ double get_pressure( uint8_t *data) {
     adc_p <<= 4;
     adc_p |= (data[2] >> 4);
 
-	var1 = (t_fine / 2.0) - 64000.0;
-	var2 = var1 * var1 * ((int16_t)((coeficients[17] << 8) | coeficients[16])) / 32768.0;
-	var2 = var2 + var1 * ((int16_t)((coeficients[15] << 8) | coeficients[14])) * 2.0;
-	var2 = ( var2 / 4.0 ) + ((int16_t)((coeficients[13] << 8) | coeficients[12])) * 65536.0;
-	var3 = ((int16_t)((coeficients[11] << 8) | coeficients[10])) * var1 * var1 / 524288.0;
-	var1 = ( var3 + ((int16_t)((coeficients[9] << 8) | coeficients[8])) * var1) / 524288.0;
-	var1 = ( 1.0 + var1 / 32768.0) * ((int32_t)((coeficients[7] << 8) | coeficients[6]));
-	p = 1048576.0 - adc_p;
-	p = ( p - ( var2 / 4096.0)) * 6250.0 / var1;
-	var1 = ((int16_t)((coeficients[23] << 8) | coeficients[22])) * p * p / 2147483648.0;
-	var2 = p * ((int16_t)((coeficients[21] << 8) | coeficients[20])) / 32768.0;
-	p = p + ( var1 + var2 + ((int16_t)((coeficients[19] << 8) | coeficients[18]))) / 16.0;
+    var1 = (t_fine / 2.0) - 64000.0;
+    var2 = var1 * var1 * ((int16_t)((coeficients[17] << 8) | coeficients[16])) / 32768.0;
+    var2 = var2 + var1 * ((int16_t)((coeficients[15] << 8) | coeficients[14])) * 2.0;
+    var2 = ( var2 / 4.0 ) + ((int16_t)((coeficients[13] << 8) | coeficients[12])) * 65536.0;
+    var3 = ((int16_t)((coeficients[11] << 8) | coeficients[10])) * var1 * var1 / 524288.0;
+    var1 = ( var3 + ((int16_t)((coeficients[9] << 8) | coeficients[8])) * var1) / 524288.0;
+    var1 = ( 1.0 + var1 / 32768.0) * ((int32_t)((coeficients[7] << 8) | coeficients[6]));
+    p = 1048576.0 - adc_p;
+    p = ( p - ( var2 / 4096.0)) * 6250.0 / var1;
+    var1 = ((int16_t)((coeficients[23] << 8) | coeficients[22])) * p * p / 2147483648.0;
+    var2 = p * ((int16_t)((coeficients[21] << 8) | coeficients[20])) / 32768.0;
+    p = p + ( var1 + var2 + ((int16_t)((coeficients[19] << 8) | coeficients[18]))) / 16.0;
 
-	return p;
+    return p;
 }
 
 // Calculate temperature from raw value and coeficients
@@ -249,7 +249,7 @@ void init_BMP280( i2c_inst_t *i2c){
     // Read 1-byte from REG_ID and store the result in chipId
     bytes_read = reg_read( i2c, BMP280_ADDR, REG_ID, data, 1);
     if( bytes_read == 0) {
-	printf("[!] Did not find ID if BMP280, read did not yield any value.\n");
+    printf("[!] Did not find ID if BMP280, read did not yield any value.\n");
     }
 
     // If chipID is $58, we have found our BMP280 module
@@ -269,11 +269,11 @@ void init_BMP280( i2c_inst_t *i2c){
 
     // Write data aquisition control parameters for temperature and pressure
 
-    data[0] = OVERSCAN_X2;	// SET Overscan for Temperature
+    data[0] = OVERSCAN_X2;    // SET Overscan for Temperature
     data[0] <<= 3;
-    data[0] |= OVERSCAN_X16;	// SET Overscan for Pressure
+    data[0] |= OVERSCAN_X16;    // SET Overscan for Pressure
     data[0] <<= 2;
-    data[0] |= MODE_SLEEP;	// SET Mode to SLEEP
+    data[0] |= MODE_SLEEP;    // SET Mode to SLEEP
 
     // printf("[i] Data aquisition control set to: %X (SLEEP)\n", data[0]); 
 
@@ -288,11 +288,11 @@ void init_BMP280( i2c_inst_t *i2c){
 
     // Write data aquisition control parameters for temperature and pressure
 
-    data[0] = OVERSCAN_X2;	// SET Overscan for Temperature
+    data[0] = OVERSCAN_X2;    // SET Overscan for Temperature
     data[0] <<=3;
-    data[0] |= OVERSCAN_X16;	// SET Overscan for Pressure
+    data[0] |= OVERSCAN_X16;    // SET Overscan for Pressure
     data[0] <<= 2;
-    data[0] |= MODE_NORMAL;	// SET Mode to NORMAL
+    data[0] |= MODE_NORMAL;    // SET Mode to NORMAL
 
     // printf("[i] Data aquisition control set to: %X (NORMAL)\n", data[0]); 
 
@@ -314,11 +314,11 @@ void init_BMP280( i2c_inst_t *i2c){
 }
 
 // Write bytes to a specified register
-void reg_write(	i2c_inst_t *i2c,
-		const uint addr,
-		const uint8_t reg,
-		uint8_t *buf,
-		const uint8_t nbytes) {
+void reg_write(    i2c_inst_t *i2c,
+        const uint addr,
+        const uint8_t reg,
+        uint8_t *buf,
+        const uint8_t nbytes) {
 
     uint8_t msg[nbytes + 1];
 
@@ -338,11 +338,11 @@ void reg_write(	i2c_inst_t *i2c,
 }
 
 // Read bytes from a specified register
-int reg_read(	i2c_inst_t *i2c,
-		const uint addr,
-		const uint8_t reg,
-		uint8_t *buf,
-		const uint8_t nbytes) {
+int reg_read(    i2c_inst_t *i2c,
+        const uint addr,
+        const uint8_t reg,
+        uint8_t *buf,
+        const uint8_t nbytes) {
 
     int num_bytes_read = 0;
 
