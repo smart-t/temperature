@@ -54,18 +54,19 @@ static const uint8_t IIR_FILTER_X16 = 0x04;
 /* BMP280 REGISTERS ************************************************************/
 static const uint8_t BMP280REG_DIG_T1     = 0x88; /* ID register address       */
 static const uint8_t BMP280REG_ID         = 0xD0; /* ID register address       */
-static const uint8_t BMP280REG_TEMP       = 0xFA; /* Temerature register addr. */
+static const uint8_t BMP280REG_TEMP       = 0xFA; /* Temperature register addr.*/
 static const uint8_t BMP280REG_PRESSURE   = 0xF7; /* Pressure register address */
 static const uint8_t BMP280REG_RESET      = 0xE0; /* Soft reset address        */
 static const uint8_t BMP280REG_STATUS     = 0xF3; /* Status register address   */
-static const uint8_t BMP280REG_CTRL_MEAS  = 0xF4; /* Data aquisition ctrl addr.*/
+static const uint8_t BMP280REG_CTRL_MEAS  = 0xF4; /* Data acquisition ctrl addr*/
 static const uint8_t BMP280REG_CONFIG     = 0xF5; /* Config register address   */
 
 /* SSD1306 REGISTERS ***********************************************************/
+static const uint8_t SSD1306REG_COMMAND   = 0x80;  /* Command register         */
 static const uint8_t SSD1306REG_CONTRAST  = 0x81;  /* Contrast register address*/
 static const uint8_t SSD1306REG_ENTIRE_ON = 0xA4;  /* Output follows RAM       */
 static const uint8_t SSD1306REG_NORM_INV  = 0xA6;  /* Output not inverted      */
-static const uint8_t SSD1306REG_DISPLAY   = 0xAE;  /* Display register         */
+static const uint8_t SSD1306REG_DISP      = 0xAE;  /* Display register         */
 static const uint8_t SSD1306REG_MEM_ADDR  = 0x20;  /* Memory address register  */
 static const uint8_t SSD1306REG_COL_ADDR  = 0x21;  /* Column address register  */
 static const uint8_t SSD1306REG_PAGE_ADDR = 0x22;  /* Page address register    */
@@ -79,6 +80,11 @@ static const uint8_t SSD1306REG_DISP_CLK_DIV = 0xD5; /* Divide ratio register  *
 static const uint8_t SSD1306REG_PRECHARGE = 0xD9;  /* Pre-charge per. register */
 static const uint8_t SSD1306REG_VCOM_DESEL = 0xDB; /* VCommunication conf. reg.*/
 static const uint8_t SSD1306REG_CHARGE_PUMP = 0x8D; /* Enable charge pump reg. */
+
+/* CONSTANTS FOR DISPLAY *******************************************************/
+static const int WIDTH = 128;
+static const int HEIGHT = 32;
+static const bool EXT_POWER = false;
 
 /* FUNCTION HEADERS ************************************************************/
 void reg_write(      i2c_inst_t *i2c,
@@ -101,10 +107,10 @@ double get_pressure( uint8_t *data );
 
 double get_height( double pressure, double p_atsealevel);
 
-void init_SSD1306( i2c_inst_t *i2c );
+void init_SSD1306( i2c_inst_t *i2c, int width, int height, bool ext_pow );
 
 /* GLOBAL VARS *****************************************************************/
-uint8_t coeficients[24]; /* coeficients required for temperature and pressure  */
+uint8_t coefficients[24]; /* coefficients required for temperature and pressure  */
 double t_fine; /* needed to pass the var1 + var2 temperature to pressure calc. */
 
 int main(void){
@@ -145,21 +151,21 @@ int main(void){
     // Initialize BMP280 Module
     init_BMP280( i2c);
 
-    // Initialize SSD1306 Oled display Module
-	init_SSD1306( i2c);
+    // Initialize SSD1306 Oled display Module, pass width, height and power settings to initialisation
+	init_SSD1306( i2c, WIDTH, HEIGHT, EXT_POWER);
 
     while(1){
 
         // Get temperature from module
         n = reg_read( i2c, BMP280_ADDR, BMP280REG_TEMP, data, 3);
 
-        // Get temperature from raw value and stored coeficients
+        // Get temperature from raw value and stored coefficients
         temperature = get_temperature( data);
 
         // Get temperature from module
         n = reg_read( i2c, BMP280_ADDR, BMP280REG_PRESSURE, data, 3);
 
-        // Get temperature from raw value and stored coeficients
+        // Get temperature from raw value and stored coefficients
         pressure = get_pressure( data);
 
         // Get height at location
@@ -204,7 +210,7 @@ double get_height( double pressure, double p_atsealevel){
     return h;
 }
 
-// Calculate pressure from raw value and coeficients
+// Calculate pressure from raw value and coefficients
 double get_pressure( uint8_t *data) {
     double p = 0.0;
     double var1 = 0;
@@ -219,22 +225,22 @@ double get_pressure( uint8_t *data) {
     adc_p |= (data[2] >> 4);
 
     var1 = (t_fine / 2.0) - 64000.0;
-    var2 = var1 * var1 * ((int16_t)((coeficients[17] << 8) | coeficients[16])) / 32768.0;
-    var2 = var2 + var1 * ((int16_t)((coeficients[15] << 8) | coeficients[14])) * 2.0;
-    var2 = ( var2 / 4.0 ) + ((int16_t)((coeficients[13] << 8) | coeficients[12])) * 65536.0;
-    var3 = ((int16_t)((coeficients[11] << 8) | coeficients[10])) * var1 * var1 / 524288.0;
-    var1 = ( var3 + ((int16_t)((coeficients[9] << 8) | coeficients[8])) * var1) / 524288.0;
-    var1 = ( 1.0 + var1 / 32768.0) * ((int32_t)((coeficients[7] << 8) | coeficients[6]));
+    var2 = var1 * var1 * ((int16_t)((coefficients[17] << 8) | coefficients[16])) / 32768.0;
+    var2 = var2 + var1 * ((int16_t)((coefficients[15] << 8) | coefficients[14])) * 2.0;
+    var2 = ( var2 / 4.0 ) + ((int16_t)((coefficients[13] << 8) | coefficients[12])) * 65536.0;
+    var3 = ((int16_t)((coefficients[11] << 8) | coefficients[10])) * var1 * var1 / 524288.0;
+    var1 = ( var3 + ((int16_t)((coefficients[9] << 8) | coefficients[8])) * var1) / 524288.0;
+    var1 = ( 1.0 + var1 / 32768.0) * ((int32_t)((coefficients[7] << 8) | coefficients[6]));
     p = 1048576.0 - adc_p;
     p = ( p - ( var2 / 4096.0)) * 6250.0 / var1;
-    var1 = ((int16_t)((coeficients[23] << 8) | coeficients[22])) * p * p / 2147483648.0;
-    var2 = p * ((int16_t)((coeficients[21] << 8) | coeficients[20])) / 32768.0;
-    p = p + ( var1 + var2 + ((int16_t)((coeficients[19] << 8) | coeficients[18]))) / 16.0;
+    var1 = ((int16_t)((coefficients[23] << 8) | coefficients[22])) * p * p / 2147483648.0;
+    var2 = p * ((int16_t)((coefficients[21] << 8) | coefficients[20])) / 32768.0;
+    p = p + ( var1 + var2 + ((int16_t)((coefficients[19] << 8) | coefficients[18]))) / 16.0;
 
     return p;
 }
 
-// Calculate temperature from raw value and coeficients
+// Calculate temperature from raw value and coefficients
 double get_temperature( uint8_t *data) {
     double t = 0.0;
     double var1 = 0;
@@ -247,12 +253,12 @@ double get_temperature( uint8_t *data) {
     adc_t <<= 4;
     adc_t |= (data[2] >> 4);
 
-    var1 = (adc_t/16384.0 - ((int32_t)((coeficients[1] << 8) | coeficients[0]))/1024.0) *
-           ((int16_t)((coeficients[3] << 8) | coeficients[2]));
+    var1 = (adc_t/16384.0 - ((int32_t)((coefficients[1] << 8) | coefficients[0]))/1024.0) *
+           ((int16_t)((coefficients[3] << 8) | coefficients[2]));
 
-    var2 = (adc_t/131072.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/8192.0) *
-           (adc_t/131072.0 - ((int16_t)((coeficients[1] << 8) | coeficients[0]))/8192.0) *
-           ((int16_t)((coeficients[5] << 8) | coeficients[4]));
+    var2 = (adc_t/131072.0 - ((int16_t)((coefficients[1] << 8) | coefficients[0]))/8192.0) *
+           (adc_t/131072.0 - ((int16_t)((coefficients[1] << 8) | coefficients[0]))/8192.0) *
+           ((int16_t)((coefficients[5] << 8) | coefficients[4]));
 
     t_fine = var1 + var2;
     t = (var1 + var2) / 5120.0;
@@ -261,7 +267,7 @@ double get_temperature( uint8_t *data) {
 }
 
 // Init SSD1306 module
-void init_SSD1306( i2c_inst_t *i2c){
+void init_SSD1306( i2c_inst_t *i2c, int w, int h, bool p){
 
 	// Define data that we use to send init commands
 	uint8_t data[3];
@@ -272,65 +278,84 @@ void init_SSD1306( i2c_inst_t *i2c){
     // Give it some time to wakeup
     sleep_ms(1000);
 
-    // Set SSD1306 display to off
-    data[0] = 0x00;	// OFF
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISPL_OFF, &data[0], 1);
+    // Set SSD1306 display init sequence
+    data[0] = SSD1306REG_DISP | 0x00;	// Display OFF
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set memory addressing to horizontal mode
-    data[0] = 0x01;
-    data[1] = 0x00;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_MEM_ADDR, &data[0], 2);
+    data[0] = SSD1306REG_MEM_ADDR;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set contrast control
-    data[0] = 0x01;
-    data[1] = 0xCF;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_CONTRAST, &data[0], 2);
-
-	// Column 127 is segment 0
     data[0] = 0x00;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COLUMN127, &data[0], 1);
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set desplay to normal (not inversed)
+    data[0] = SSD1306REG_DISP_START_LINE | 0x00;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_SEG_REMAP | 0x01;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_MUX_RATIO;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = h - 1;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_COM_OUT_DIR | 0x08;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_DISP_OFFSET;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
     data[0] = 0x00;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_NORM_INV, &data[0], 1);
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set desplay to normal
-    data[0] = 0x00;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_NORM_DISP, &data[0], 1);
+    data[0] = SSD1306REG_COM_PIN_CFG;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set mux ratio to 1/64
-    data[0] = 0x01;
-    data[1] = 0x3F;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_MUX_RATIO, &data[0], 2);
+    if( w > 2 * h) data[0] = 0x02;
+    else data[0] = 0x12;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set divide ratio
-    data[0] = 0x01;
-    data[1] = 0x80;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_DIV_RATIO, &data[0], 2);
+    data[0] = SSD1306REG_DISP_CLK_DIV;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set pre-charge period
-    data[0] = 0x01;
-    data[1] = 0xF1;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_PRE_CHRGE, &data[0], 2);
+    data[0] = 0x80;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set com configuration
-    data[0] = 0x01;
-    data[1] = 0x12;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COM_CONF, &data[0], 2);
+    data[0] = SSD1306REG_PRECHARGE;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Set vcom configuration
-    data[0] = 0x01;
-    data[1] = 0x40;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_VCOM_CONF, &data[0], 2);
+    if(p) data[0] = 0x22;
+    else data[0] = 0xF1;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Enable charge pump
-    data[0] = 0x01;
-    data[1] = 0x14;
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_EN_CHPMP, &data[0], 2);
+    data[0] = SSD1306REG_VCOM_DESEL;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-    // Set SSD1306 display to on
-    data[0] = 0x00;	// ON
-    reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISPL_ON, &data[0], 1);
+    data[0] = 0x30; // 0.83*Vcc
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_CONTRAST;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = 0xFF; // Maximum contrast
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_ENTIRE_ON;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_NORM_INV;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_CHARGE_PUMP;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    if(p) data[0] = 0x10;
+    else data[0] = 0x14;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+    data[0] = SSD1306REG_DISP | 0x01; // Display ON
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 }
  
 // Init BMP280 module
@@ -366,7 +391,7 @@ void init_BMP280( i2c_inst_t *i2c){
     reg_write( i2c, BMP280_ADDR, BMP280REG_RESET, &data[0], 1);
     sleep_ms(4);
 
-    // Write data aquisition control parameters for temperature and pressure
+    // Write data acquisition control parameters for temperature and pressure
 
     data[0] = OVERSCAN_X2;    // SET Overscan for Temperature
     data[0] <<= 3;
@@ -374,7 +399,7 @@ void init_BMP280( i2c_inst_t *i2c){
     data[0] <<= 2;
     data[0] |= MODE_SLEEP;    // SET Mode to SLEEP
 
-    // printf("[i] Data aquisition control set to: %X (SLEEP)\n", data[0]); 
+    // printf("[i] Data acquisition control set to: %X (SLEEP)\n", data[0]);
 
     reg_write( i2c, BMP280_ADDR, BMP280REG_CTRL_MEAS, &data[0], 1);
 
@@ -385,7 +410,7 @@ void init_BMP280( i2c_inst_t *i2c){
 
     reg_write( i2c, BMP280_ADDR, BMP280REG_CONFIG, &data[0], 1);
 
-    // Write data aquisition control parameters for temperature and pressure
+    // Write data acquisition control parameters for temperature and pressure
 
     data[0] = OVERSCAN_X2;    // SET Overscan for Temperature
     data[0] <<=3;
@@ -393,7 +418,7 @@ void init_BMP280( i2c_inst_t *i2c){
     data[0] <<= 2;
     data[0] |= MODE_NORMAL;    // SET Mode to NORMAL
 
-    // printf("[i] Data aquisition control set to: %X (NORMAL)\n", data[0]); 
+    // printf("[i] Data acquisition control set to: %X (NORMAL)\n", data[0]);
 
     reg_write( i2c, BMP280_ADDR, BMP280REG_CTRL_MEAS, &data[0], 1);
 
@@ -405,10 +430,10 @@ void init_BMP280( i2c_inst_t *i2c){
 
     } while( data[0] & 0x08);
 
-    // Read coeficients from device, we use this to compute the temperature and pressure
-    bytes_read = reg_read( i2c, BMP280_ADDR, BMP280REG_DIG_T1, coeficients, 24);
+    // Read coefficients from device, we use this to compute the temperature and pressure
+    bytes_read = reg_read( i2c, BMP280_ADDR, BMP280REG_DIG_T1, coefficients, 24);
     if( bytes_read != 24) {
-        printf("[!] Did not read the required 24 coeficient bytes.\n");
+        printf("[!] Did not read the required 24 coefficient bytes.\n");
     }
 }
 
