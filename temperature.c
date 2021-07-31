@@ -124,7 +124,7 @@ int main(void){
     int temp_i = 0;
 
     // allocate enough memory for the display of WIDTH*HEIGHT
-    buffer = (uint8_t *)malloc((WIDTH*HEIGHT/8*sizeof(uint8_t))+1);
+    buffer = (uint8_t *)malloc((WIDTH*HEIGHT/8)*sizeof(uint8_t));
 
     // Ports
     i2c_inst_t *i2c = i2c0;
@@ -162,12 +162,124 @@ int main(void){
     // Initialize SSD1306 Oled display Module, pass width, height and power settings to initialisation
 	init_SSD1306( i2c, WIDTH, HEIGHT, EXT_POWER);
 
+	// Clear buffer and 
+	set_buffer(buffer, 0x00); // erase buffer (all pixels off)
+
+	uint8_t x = 0;
+	uint8_t y = 0;
+	for( uint8_t i=1; i<=15; i++){
+		x = i;
+		y = 31;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=1; i<=15; i++){
+		x = i;
+		y = 15;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=1; i<=15; i++){
+		x = i;
+		y = 0;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=2; i<=13; i++){
+		x = 1;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=2; i<=13; i++){
+		x = 0;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=2; i<=13; i++){
+		x = 16;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=17; i<=29; i++){
+		x = 0;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=17; i<=29; i++){
+		x = 16;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=29; i<=31; i++){
+		x = 20;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=20; i<=22; i++){
+		x = i;
+		y = 31;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=29; i<=31; i++){
+		x = 22;
+		y = i;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
+	for( uint8_t i=20; i<=22; i++){
+		x = i;
+		y = 29;
+
+		x &= 0x7f;
+  		y &= 0x1f;
+  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	}
+
     // display OFF
-    data[0] = SSD1306REG_DISP | 0xAE;	// Display OFF
+    // display OFF
+    data[0] = SSD1306REG_DISP | 0x00;	// Display OFF
     reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
-	// Clear buffer and 
-	set_buffer(buffer, 0xFF); // erase buffer (all pixels off)
     for( int i=0; i < 512; i =i+32){
     	reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISP_START_LINE, &buffer[i], 32);
 	}
@@ -212,10 +324,10 @@ int main(void){
         gpio_put(LED_PIN, 0);
 
     	sleep_ms(1000);
-
-		// Finally free the memory that we reserved for buffer
-		free(buffer);
     }
+
+	// Finally free the memory that we reserved for buffer
+	free(buffer);
 
     return 0;
 }
