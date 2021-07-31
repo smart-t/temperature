@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
@@ -86,6 +87,8 @@ static const int WIDTH = 128;
 static const int HEIGHT = 32;
 static const bool EXT_POWER = false;
 
+uint8_t *buffer; /* This is where we store the 128x32pixel info (512 Bytes).   */
+
 /* FUNCTION HEADERS ************************************************************/
 void reg_write(      i2c_inst_t *i2c,
           const uint addr,
@@ -107,6 +110,8 @@ double get_pressure( uint8_t *data );
 
 double get_height( double pressure, double p_atsealevel);
 
+void set_buffer( uint8_t *buffer, uint8_t value);
+
 void init_SSD1306( i2c_inst_t *i2c, int width, int height, bool ext_pow );
 
 /* GLOBAL VARS *****************************************************************/
@@ -117,6 +122,9 @@ int main(void){
 
     // Variable to hold the temperature
     int temp_i = 0;
+
+    // allocate enough memory for the display of WIDTH*HEIGHT
+    buffer = (uint8_t *)malloc((WIDTH*HEIGHT/8*sizeof(uint8_t))+1);
 
     // Ports
     i2c_inst_t *i2c = i2c0;
@@ -154,6 +162,20 @@ int main(void){
     // Initialize SSD1306 Oled display Module, pass width, height and power settings to initialisation
 	init_SSD1306( i2c, WIDTH, HEIGHT, EXT_POWER);
 
+    // display OFF
+    data[0] = SSD1306REG_DISP | 0xAE;	// Display OFF
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
+	// Clear buffer and 
+	set_buffer(buffer, 0xFF); // erase buffer (all pixels off)
+    for( int i=0; i < 512; i =i+32){
+    	reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISP_START_LINE, &buffer[i], 32);
+	}
+
+    // display ON
+    data[0] = SSD1306REG_DISP | 0x01;	// Display ON
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
+
     while(1){
 
         // Get temperature from module
@@ -189,13 +211,24 @@ int main(void){
         // LED-OFF
         gpio_put(LED_PIN, 0);
 
-    sleep_ms(1000);
+    	sleep_ms(1000);
+
+		// Finally free the memory that we reserved for buffer
+		free(buffer);
     }
 
     return 0;
 }
 
 /* FUNCTION DEFINITIONS ********************************************************/
+
+void set_buffer( uint8_t *buf, uint8_t val){
+	int i;
+
+	for(i=0; i < (WIDTH*HEIGHT/8); i++){
+		*(buf + i) = val;
+	}
+}
 
 // Calcultate height given the p_measured and p_atsealevel for the location
 double get_height( double pressure, double p_atsealevel){
