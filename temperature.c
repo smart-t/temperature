@@ -25,9 +25,11 @@
 
 /* ADDRESS OF BMP280 ***********************************************************/
 /* when SD0 is not connected this Adafruit BMP280 module appears on address $77*/
-
 static const uint8_t BMP280_ADDR = 0x77;
 static const uint8_t BMP280_RESET_VAL = 0xB6;
+
+/* ADDRESS OF SSD1306 128x64bit OLED Display module is $3C                     */
+static const uint8_t SSD1306_ADDR = 0x3C;
 
 /* Overscan values for temperature, pressure, and humidity *********************/
 static const uint8_t OVERSCAN_DISABLE = 0x00;
@@ -50,14 +52,33 @@ static const uint8_t IIR_FILTER_X8 = 0x03;
 static const uint8_t IIR_FILTER_X16 = 0x04;
 
 /* BMP280 REGISTERS ************************************************************/
-static const uint8_t REG_DIG_T1    = 0x88;  /* ID register address             */
-static const uint8_t REG_ID        = 0xD0;  /* ID register address             */
-static const uint8_t REG_TEMP      = 0xFA;  /* Temerature register address     */
-static const uint8_t REG_PRESSURE  = 0xF7;  /* Pressure register address       */
-static const uint8_t REG_RESET     = 0xE0;  /* Soft reset address              */
-static const uint8_t REG_STATUS    = 0xF3;  /* Status register address         */
-static const uint8_t REG_CTRL_MEAS = 0xF4;  /* Data aquisition ctrl address    */
-static const uint8_t REG_CONFIG    = 0xF5;  /* Config register address         */
+static const uint8_t BMP280REG_DIG_T1     = 0x88; /* ID register address       */
+static const uint8_t BMP280REG_ID         = 0xD0; /* ID register address       */
+static const uint8_t BMP280REG_TEMP       = 0xFA; /* Temerature register addr. */
+static const uint8_t BMP280REG_PRESSURE   = 0xF7; /* Pressure register address */
+static const uint8_t BMP280REG_RESET      = 0xE0; /* Soft reset address        */
+static const uint8_t BMP280REG_STATUS     = 0xF3; /* Status register address   */
+static const uint8_t BMP280REG_CTRL_MEAS  = 0xF4; /* Data aquisition ctrl addr.*/
+static const uint8_t BMP280REG_CONFIG     = 0xF5; /* Config register address   */
+
+/* SSD1306 REGISTERS ***********************************************************/
+static const uint8_t SSD1306REG_CONTRAST  = 0x81;  /* Contrast register address*/
+static const uint8_t SSD1306REG_ENTIRE_ON = 0xA4;  /* Output follows RAM       */
+static const uint8_t SSD1306REG_NORM_INV  = 0xA6;  /* Output not inverted      */
+static const uint8_t SSD1306REG_DISPLAY   = 0xAE;  /* Display register         */
+static const uint8_t SSD1306REG_MEM_ADDR  = 0x20;  /* Memory address register  */
+static const uint8_t SSD1306REG_COL_ADDR  = 0x21;  /* Column address register  */
+static const uint8_t SSD1306REG_PAGE_ADDR = 0x22;  /* Page address register    */
+static const uint8_t SSD1306REG_DISP_START_LINE = 0x40; /* Startline of displ. */
+static const uint8_t SSD1306REG_SEG_REMAP = 0xA0;  /* Segment remap register   */
+static const uint8_t SSD1306REG_MUX_RATIO = 0xA8;  /* Mux ratio register       */
+static const uint8_t SSD1306REG_COM_OUT_DIR = 0xC8; /* Communication out dir.  */
+static const uint8_t SSD1306REG_DISP_OFFSET = 0xD3; /* Display offset reg.     */
+static const uint8_t SSD1306REG_COM_PIN_CFG = 0xDA; /* Communication conf. reg.*/
+static const uint8_t SSD1306REG_DISP_CLK_DIV = 0xD5; /* Divide ratio register  */
+static const uint8_t SSD1306REG_PRECHARGE = 0xD9;  /* Pre-charge per. register */
+static const uint8_t SSD1306REG_VCOM_DESEL = 0xDB; /* VCommunication conf. reg.*/
+static const uint8_t SSD1306REG_CHARGE_PUMP = 0x8D; /* Enable charge pump reg. */
 
 /* FUNCTION HEADERS ************************************************************/
 void reg_write(      i2c_inst_t *i2c,
@@ -79,6 +100,8 @@ double get_temperature( uint8_t *data );
 double get_pressure( uint8_t *data );
 
 double get_height( double pressure, double p_atsealevel);
+
+void init_SSD1306( i2c_inst_t *i2c );
 
 /* GLOBAL VARS *****************************************************************/
 uint8_t coeficients[24]; /* coeficients required for temperature and pressure  */
@@ -115,23 +138,26 @@ int main(void){
     // Vars to hold the temperature and pressure
     double temperature = 0.0;
     double pressure = 0.0;
-    double pressure_at_sealevel_for_location = 100800.0; // Eindhoven 2021.07.25 1008 milibar = 100800 Pa
+    double pressure_at_sealevel_for_location = 101100.0; // Eindhoven 2021.07.26 1011 milibar = 101100 Pa
     double height = 0.0;
     char abovebelow[5];
 
     // Initialize BMP280 Module
     init_BMP280( i2c);
 
+    // Initialize SSD1306 Oled display Module
+	init_SSD1306( i2c);
+
     while(1){
 
         // Get temperature from module
-        n = reg_read( i2c, BMP280_ADDR, REG_TEMP, data, 3);
+        n = reg_read( i2c, BMP280_ADDR, BMP280REG_TEMP, data, 3);
 
         // Get temperature from raw value and stored coeficients
         temperature = get_temperature( data);
 
         // Get temperature from module
-        n = reg_read( i2c, BMP280_ADDR, REG_PRESSURE, data, 3);
+        n = reg_read( i2c, BMP280_ADDR, BMP280REG_PRESSURE, data, 3);
 
         // Get temperature from raw value and stored coeficients
         pressure = get_pressure( data);
@@ -234,6 +260,79 @@ double get_temperature( uint8_t *data) {
     return t;
 }
 
+// Init SSD1306 module
+void init_SSD1306( i2c_inst_t *i2c){
+
+	// Define data that we use to send init commands
+	uint8_t data[3];
+
+	// initialize bytes_read to zero
+	int bytes_read = 0;
+
+    // Give it some time to wakeup
+    sleep_ms(1000);
+
+    // Set SSD1306 display to off
+    data[0] = 0x00;	// OFF
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISPL_OFF, &data[0], 1);
+
+	// Set memory addressing to horizontal mode
+    data[0] = 0x01;
+    data[1] = 0x00;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_MEM_ADDR, &data[0], 2);
+
+	// Set contrast control
+    data[0] = 0x01;
+    data[1] = 0xCF;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_CONTRAST, &data[0], 2);
+
+	// Column 127 is segment 0
+    data[0] = 0x00;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COLUMN127, &data[0], 1);
+
+	// Set desplay to normal (not inversed)
+    data[0] = 0x00;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_NORM_INV, &data[0], 1);
+
+	// Set desplay to normal
+    data[0] = 0x00;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_NORM_DISP, &data[0], 1);
+
+	// Set mux ratio to 1/64
+    data[0] = 0x01;
+    data[1] = 0x3F;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_MUX_RATIO, &data[0], 2);
+
+	// Set divide ratio
+    data[0] = 0x01;
+    data[1] = 0x80;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_DIV_RATIO, &data[0], 2);
+
+	// Set pre-charge period
+    data[0] = 0x01;
+    data[1] = 0xF1;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_PRE_CHRGE, &data[0], 2);
+
+	// Set com configuration
+    data[0] = 0x01;
+    data[1] = 0x12;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_COM_CONF, &data[0], 2);
+
+	// Set vcom configuration
+    data[0] = 0x01;
+    data[1] = 0x40;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_VCOM_CONF, &data[0], 2);
+
+	// Enable charge pump
+    data[0] = 0x01;
+    data[1] = 0x14;
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_EN_CHPMP, &data[0], 2);
+
+    // Set SSD1306 display to on
+    data[0] = 0x00;	// ON
+    reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISPL_ON, &data[0], 1);
+}
+ 
 // Init BMP280 module
 void init_BMP280( i2c_inst_t *i2c){
 
@@ -246,8 +345,8 @@ void init_BMP280( i2c_inst_t *i2c){
     // Give it some time to wakeup
     sleep_ms(1000);
 
-    // Read 1-byte from REG_ID and store the result in chipId
-    bytes_read = reg_read( i2c, BMP280_ADDR, REG_ID, data, 1);
+    // Read 1-byte from BMP280REG_ID and store the result in chipId
+    bytes_read = reg_read( i2c, BMP280_ADDR, BMP280REG_ID, data, 1);
     if( bytes_read == 0) {
     printf("[!] Did not find ID if BMP280, read did not yield any value.\n");
     }
@@ -264,7 +363,7 @@ void init_BMP280( i2c_inst_t *i2c){
 
     // Write BMP280_RESET_VAL to reset-register, to soft reset the device then wait for 4ms
     data[0] = BMP280_RESET_VAL;
-    reg_write( i2c, BMP280_ADDR, REG_RESET, &data[0], 1);
+    reg_write( i2c, BMP280_ADDR, BMP280REG_RESET, &data[0], 1);
     sleep_ms(4);
 
     // Write data aquisition control parameters for temperature and pressure
@@ -277,14 +376,14 @@ void init_BMP280( i2c_inst_t *i2c){
 
     // printf("[i] Data aquisition control set to: %X (SLEEP)\n", data[0]); 
 
-    reg_write( i2c, BMP280_ADDR, REG_CTRL_MEAS, &data[0], 1);
+    reg_write( i2c, BMP280_ADDR, BMP280REG_CTRL_MEAS, &data[0], 1);
 
     data[0] = IIR_FILTER_DISABLE;
     data[0] <<= 2;
 
     // printf("[i] Config value set to: %X\n", data[0]); 
 
-    reg_write( i2c, BMP280_ADDR, REG_CONFIG, &data[0], 1);
+    reg_write( i2c, BMP280_ADDR, BMP280REG_CONFIG, &data[0], 1);
 
     // Write data aquisition control parameters for temperature and pressure
 
@@ -296,25 +395,25 @@ void init_BMP280( i2c_inst_t *i2c){
 
     // printf("[i] Data aquisition control set to: %X (NORMAL)\n", data[0]); 
 
-    reg_write( i2c, BMP280_ADDR, REG_CTRL_MEAS, &data[0], 1);
+    reg_write( i2c, BMP280_ADDR, BMP280REG_CTRL_MEAS, &data[0], 1);
 
     // Wait until the NORMAL operation mode has settled
     do {
         sleep_ms(2);
         // Get status and wait until bit-4 is set
-        bytes_read = reg_read( i2c, BMP280_ADDR, REG_STATUS, data, 1);
+        bytes_read = reg_read( i2c, BMP280_ADDR, BMP280REG_STATUS, data, 1);
 
     } while( data[0] & 0x08);
 
     // Read coeficients from device, we use this to compute the temperature and pressure
-    bytes_read = reg_read( i2c, BMP280_ADDR, REG_DIG_T1, coeficients, 24);
+    bytes_read = reg_read( i2c, BMP280_ADDR, BMP280REG_DIG_T1, coeficients, 24);
     if( bytes_read != 24) {
         printf("[!] Did not read the required 24 coeficient bytes.\n");
     }
 }
 
 // Write bytes to a specified register
-void reg_write(    i2c_inst_t *i2c,
+void reg_write( i2c_inst_t *i2c,
         const uint addr,
         const uint8_t reg,
         uint8_t *buf,
@@ -338,7 +437,7 @@ void reg_write(    i2c_inst_t *i2c,
 }
 
 // Read bytes from a specified register
-int reg_read(    i2c_inst_t *i2c,
+int reg_read( i2c_inst_t *i2c,
         const uint addr,
         const uint8_t reg,
         uint8_t *buf,
