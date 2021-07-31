@@ -167,116 +167,118 @@ int main(void){
 
 	uint8_t x = 0;
 	uint8_t y = 0;
-	for( uint8_t i=1; i<=15; i++){
-		x = i;
-		y = 31;
 
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+	for( uint8_t z=4; z<=104; z=z+25){
+
+		for( uint8_t i=1; i<=15; i++){
+			x = i+z;
+			y = 31;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=1; i<=15; i++){
+			x = i+z;
+			y = 15;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=1; i<=15; i++){
+			x = i+z;
+			y = 0;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=2; i<=13; i++){
+			x = 1+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=2; i<=13; i++){
+			x = 0+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=2; i<=13; i++){
+			x = 16+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=17; i<=29; i++){
+			x = 0+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=17; i<=29; i++){
+			x = 16+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=29; i<=31; i++){
+			x = 20+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=20; i<=22; i++){
+			x = i+z;
+			y = 31;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=29; i<=31; i++){
+			x = 22+z;
+			y = i;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
+
+		for( uint8_t i=20; i<=22; i++){
+			x = i+z;
+			y = 29;
+
+			x &= 0x7f;
+  			y &= 0x1f;
+  			buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
+		}
 	}
 
-	for( uint8_t i=1; i<=15; i++){
-		x = i;
-		y = 15;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=1; i<=15; i++){
-		x = i;
-		y = 0;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=2; i<=13; i++){
-		x = 1;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=2; i<=13; i++){
-		x = 0;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=2; i<=13; i++){
-		x = 16;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=17; i<=29; i++){
-		x = 0;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=17; i<=29; i++){
-		x = 16;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=29; i<=31; i++){
-		x = 20;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=20; i<=22; i++){
-		x = i;
-		y = 31;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=29; i<=31; i++){
-		x = 22;
-		y = i;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-	for( uint8_t i=20; i<=22; i++){
-		x = i;
-		y = 29;
-
-		x &= 0x7f;
-  		y &= 0x1f;
-  		buffer[((y & 0xf8) << 4) + x] |= 1 << (y & 7);
-	}
-
-    // display OFF
-    // display OFF
     data[0] = SSD1306REG_DISP | 0x00;	// Display OFF
     reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
@@ -284,7 +286,6 @@ int main(void){
     	reg_write( i2c, SSD1306_ADDR, SSD1306REG_DISP_START_LINE, &buffer[i], 32);
 	}
 
-    // display ON
     data[0] = SSD1306REG_DISP | 0x01;	// Display ON
     reg_write( i2c, SSD1306_ADDR, SSD1306REG_COMMAND, &data[0], 1);
 
