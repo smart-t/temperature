@@ -177,7 +177,7 @@ void write_bigval( i2c_inst_t *i2c,
 //   ***a***
 //  *       *
 //  f       b
-//	*       *
+//  *       *
 //   ***g***
 //  *       *
 //  e       c
