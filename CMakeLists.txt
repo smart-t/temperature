@@ -15,7 +15,8 @@ pico_sdk_init()
 
 # rest of your project
 add_executable(temperature
-	temperature.c
+    temperature.c
+    bigval.c
 )
 
 pico_set_program_name(temperature "temperature")
@@ -30,6 +31,4 @@ target_link_libraries(temperature
 	hardware_i2c
 )
 
-
 pico_add_extra_outputs(temperature)
-
