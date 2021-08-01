@@ -6,14 +6,17 @@
 #include "temperature.h"
 #include "bigval.h"
 
-/* SUMMARY *********************************************************************/
-/*                   : Build for the Raskpberry PI PICO, rp2040                */
-/*                   : T. Leijtens (toon.leijtens@gmail.com                    */
-/*                   : 2021.07.24                                              */
-/*******************************************************************************/
+/******************************************************************************/
+/* temperature.c
+/* header file for temperature module using BMP280 sensor and SSD1306 display
+/* Author: Toon Leijtens, toon@ybzconsulting.com
+/* Date: 2021.08.01.08:37PM
+/* Version: 1.0
+/* License: MIT
+/******************************************************************************/
 
 /* GLOBAL VARS *****************************************************************/
-uint8_t coefficients[24]; /* coefficients required for temperature and pressure  */
+uint8_t coefficients[24]; /* coefficients required for temperature and pressure*/
 uint8_t *buffer; /* This is where we store the 128x32pixel info (512 Bytes).   */
 double t_fine; /* needed to pass the var1 + var2 temperature to pressure calc. */
 

@@ -3,6 +3,21 @@
 #include "temperature.h"
 #include "bigval.h"
 
+/******************************************************************************/
+/* bigval.c
+/* header file for big decimal values on a 128x32 pixel SSD1306 display
+/* Author: Toon Leijtens, toon@ybzconsulting.com
+/* Date: 2021.08.01.08:38PM
+/* Version: 1.0
+/* License: MIT
+/*
+/* To integrate in your project, simply provide an instance to the i2c bus and
+/* the address of the SSD1306 device, the 128x32 version is on 0x3C, then
+/* initialize a linear buffer with uint8_t type elements. You need to have
+/* 512 elements (bytes) in total (=128*32/8).
+/******************************************************************************/
+
+// write_bigval function to write to SSD1306 identified by addr using i2c bus
 void write_bigval( i2c_inst_t *i2c,
 			uint addr,
 			char *buffer,
